@@ -18,8 +18,8 @@ import {
 } from 'lucide-react';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { supabase } from '../lib/supabase';
-
 
 const benefits = [
   {
@@ -44,8 +44,9 @@ const benefits = [
   },
 ];
 
-
 export default function Home() {
+  const router = useRouter();
+
   const [menuOpen, setMenuOpen] = useState(false);
   const [operation, setOperation] = useState('Venta');
   const [message, setMessage] = useState('');
@@ -53,7 +54,6 @@ export default function Home() {
   const [properties, setProperties] = useState([]);
   const [loadingProperties, setLoadingProperties] = useState(true);
   const [propertiesError, setPropertiesError] = useState('');
-
 
   useEffect(() => {
     async function cargarPropiedades() {
@@ -90,10 +90,8 @@ export default function Home() {
         return;
       }
 
-
       const propiedadesFormateadas = (data || []).map(
         (propiedad) => {
-
           const tags = [];
 
           if (propiedad.superficie_total) {
@@ -111,21 +109,17 @@ export default function Home() {
             tags.push(`${superficie} ${unidad}`);
           }
 
-
           if (propiedad.tipo) {
             tags.push(propiedad.tipo);
           }
-
 
           if (propiedad.factibilidad_agua === 'si') {
             tags.push('Agua');
           }
 
-
           if (propiedad.factibilidad_luz === 'si') {
             tags.push('Factibilidad eléctrica');
           }
-
 
           let price = 'Precio a consultar';
 
@@ -144,13 +138,11 @@ export default function Home() {
             }
           }
 
-
           const image =
             Array.isArray(propiedad.imagenes) &&
             propiedad.imagenes.length > 0
               ? propiedad.imagenes[0]
               : 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1100&q=85';
-
 
           return {
             id: propiedad.id,
@@ -179,23 +171,18 @@ export default function Home() {
               'Ubicación por confirmar',
 
             tags,
-
             price,
-
             image,
           };
         }
       );
 
-
       setProperties(propiedadesFormateadas);
       setLoadingProperties(false);
     }
 
-
     cargarPropiedades();
   }, []);
-
 
   function submitSearch(event) {
     event.preventDefault();
@@ -205,6 +192,9 @@ export default function Home() {
     );
   }
 
+  function abrirPropiedad(id) {
+    router.push(`/propiedad/${id}`);
+  }
 
   return (
     <main>
@@ -226,7 +216,6 @@ export default function Home() {
             priority
           />
         </a>
-
 
         <nav
           className="desktop-nav"
@@ -257,14 +246,12 @@ export default function Home() {
           </a>
         </nav>
 
-
         <div className="header-actions">
 
           <button className="login-btn">
             <UserRound size={19} />
             Iniciar sesión
           </button>
-
 
           <a
             className="primary-btn small"
@@ -273,7 +260,6 @@ export default function Home() {
             Publicar propiedad
             <span>+</span>
           </a>
-
 
           <button
             className="menu-btn"
@@ -286,7 +272,6 @@ export default function Home() {
           </button>
 
         </div>
-
 
         {menuOpen && (
           <nav className="mobile-nav">
@@ -316,7 +301,6 @@ export default function Home() {
 
       </header>
 
-
       {/* HERO */}
 
       <section
@@ -326,7 +310,6 @@ export default function Home() {
 
         <div className="hero-overlay" />
 
-
         <div className="hero-inner">
 
           <div className="hero-copy">
@@ -335,19 +318,16 @@ export default function Home() {
               Compra, vende o arrienda con respaldo profesional
             </div>
 
-
             <h1>
               Encuentra o vende una propiedad de manera{' '}
               <em>simple.</em>
             </h1>
-
 
             <p>
               Terrenos, parcelas, casas y departamentos
               con información verificada y respaldo
               profesional en todo el proceso.
             </p>
-
 
             <div className="hero-buttons">
 
@@ -359,7 +339,6 @@ export default function Home() {
                 Buscar propiedades
               </a>
 
-
               <a
                 href="/publicar"
                 className="secondary-btn"
@@ -370,7 +349,6 @@ export default function Home() {
 
             </div>
 
-
             <div className="verified-line">
               <CheckCircle2 size={20} />
 
@@ -379,7 +357,6 @@ export default function Home() {
             </div>
 
           </div>
-
 
           {/* BUSCADOR */}
 
@@ -414,7 +391,6 @@ export default function Home() {
               ))}
 
             </div>
-
 
             <label>
               Tipo de propiedad
@@ -465,7 +441,6 @@ export default function Home() {
 
             </label>
 
-
             <label>
               Ubicación
 
@@ -473,7 +448,6 @@ export default function Home() {
                 placeholder="Comuna, ciudad o región"
               />
             </label>
-
 
             <div className="price-row">
 
@@ -485,7 +459,6 @@ export default function Home() {
                 />
               </label>
 
-
               <label>
                 Precio máximo
 
@@ -496,7 +469,6 @@ export default function Home() {
 
             </div>
 
-
             <button
               className="search-submit"
               type="submit"
@@ -505,7 +477,6 @@ export default function Home() {
               Buscar propiedades
             </button>
 
-
             <button
               type="button"
               className="advanced"
@@ -513,7 +484,6 @@ export default function Home() {
               Búsqueda avanzada
               <ChevronDown size={17} />
             </button>
-
 
             {message && (
               <p className="form-message">
@@ -526,7 +496,6 @@ export default function Home() {
         </div>
 
       </section>
-
 
       {/* BENEFICIOS */}
 
@@ -548,7 +517,6 @@ export default function Home() {
                 <Icon size={30} />
               </div>
 
-
               <div>
                 <h3>
                   {title}
@@ -565,7 +533,6 @@ export default function Home() {
         )}
 
       </section>
-
 
       {/* PROPIEDADES REALES DESDE SUPABASE */}
 
@@ -584,7 +551,6 @@ export default function Home() {
             <span />
           </div>
 
-
           <a href="#propiedades">
             Ver todas las propiedades
             <ArrowRight size={17} />
@@ -592,20 +558,17 @@ export default function Home() {
 
         </div>
 
-
         {loadingProperties && (
           <p>
             Cargando propiedades...
           </p>
         )}
 
-
         {propertiesError && (
           <p>
             {propertiesError}
           </p>
         )}
-
 
         {!loadingProperties &&
           !propertiesError &&
@@ -617,7 +580,6 @@ export default function Home() {
 
           )}
 
-
         <div className="property-grid">
 
           {properties.map((property) => (
@@ -625,6 +587,22 @@ export default function Home() {
             <article
               className="property-card"
               key={property.id}
+              role="link"
+              tabIndex={0}
+              onClick={() =>
+                abrirPropiedad(property.id)
+              }
+              onKeyDown={(event) => {
+                if (
+                  event.key === 'Enter' ||
+                  event.key === ' '
+                ) {
+                  abrirPropiedad(property.id);
+                }
+              }}
+              style={{
+                cursor: 'pointer',
+              }}
             >
 
               <div className="property-image">
@@ -634,23 +612,24 @@ export default function Home() {
                   alt={property.title}
                 />
 
-
                 <span
                   className={`badge ${property.badgeClass}`}
                 >
                   {property.badge}
                 </span>
 
-
                 <button
+                  type="button"
                   className="favorite"
                   aria-label={`Guardar ${property.title}`}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                  }}
                 >
                   <Heart size={19} />
                 </button>
 
               </div>
-
 
               <div className="property-body">
 
@@ -658,11 +637,9 @@ export default function Home() {
                   {property.title}
                 </h3>
 
-
                 <p className="location">
                   {property.location}
                 </p>
-
 
                 <div className="tags">
 
@@ -680,7 +657,6 @@ export default function Home() {
 
                 </div>
 
-
                 <strong>
                   {property.price}
                 </strong>
@@ -695,7 +671,6 @@ export default function Home() {
 
       </section>
 
-
       {/* VENDER */}
 
       <section
@@ -709,12 +684,10 @@ export default function Home() {
             VENDE CON HECTA
           </p>
 
-
           <h2>
             Nos encargamos de todo para que vendas
             al mejor precio y con tranquilidad.
           </h2>
-
 
           <div
             id="como-funciona"
@@ -729,9 +702,7 @@ export default function Home() {
               </span>
             </div>
 
-
             <ArrowRight className="step-arrow" />
-
 
             <div>
               <Camera />
@@ -741,9 +712,7 @@ export default function Home() {
               </span>
             </div>
 
-
             <ArrowRight className="step-arrow" />
-
 
             <div>
               <UsersRound />
@@ -753,9 +722,7 @@ export default function Home() {
               </span>
             </div>
 
-
             <ArrowRight className="step-arrow" />
-
 
             <div>
               <Handshake />
@@ -769,13 +736,11 @@ export default function Home() {
 
         </div>
 
-
         <div
           className="sell-image"
           role="img"
           aria-label="Corredores revisando un terreno"
         />
-
 
         <div className="commission-card">
 
@@ -783,19 +748,16 @@ export default function Home() {
             Comisión
           </span>
 
-
           <strong>
             2,5%
             <small> + IVA</small>
           </strong>
-
 
           <p>
             solo cuando
             <br />
             se vende
           </p>
-
 
           <button>
             Conoce más
@@ -804,7 +766,6 @@ export default function Home() {
         </div>
 
       </section>
-
 
       {/* PUBLICAR */}
 
@@ -819,11 +780,9 @@ export default function Home() {
             Publica en menos de 2 minutos
           </span>
 
-
           <h2>
             ¿Tienes una propiedad para vender?
           </h2>
-
 
           <p>
             Déjanos los datos principales y nuestro
@@ -832,7 +791,6 @@ export default function Home() {
           </p>
 
         </div>
-
 
         <a
           href="/publicar"
@@ -844,7 +802,6 @@ export default function Home() {
 
       </section>
 
-
       {/* FOOTER */}
 
       <footer>
@@ -855,7 +812,6 @@ export default function Home() {
           width={190}
           height={84}
         />
-
 
         <p>
           © 2026 Hecta Corretaje de Propiedades.
