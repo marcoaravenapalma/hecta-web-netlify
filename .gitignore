@@ -1,0 +1,17 @@
+# Next.js
+.next/
+
+# Node
+node_modules/
+
+# Variables de entorno
+.env
+.env.local
+
+# macOS
+.DS_Store
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
