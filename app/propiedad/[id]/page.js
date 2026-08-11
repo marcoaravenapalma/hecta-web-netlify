@@ -1,7 +1,28 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
+import {
+  ArrowLeft,
+  Bath,
+  BedDouble,
+  Car,
+  ChevronLeft,
+  ChevronRight,
+  Droplets,
+  ExternalLink,
+  Images,
+  Mail,
+  MapPin,
+  MessageCircle,
+  Phone,
+  PlayCircle,
+  Ruler,
+  Warehouse,
+  X,
+  Zap,
+} from 'lucide-react';
+
 import { supabase } from '../../../lib/supabase';
 
 export default function PropiedadPage() {
@@ -11,6 +32,9 @@ export default function PropiedadPage() {
   const [propiedad, setPropiedad] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  const [fotoActiva, setFotoActiva] = useState(0);
+  const [galeriaAbierta, setGaleriaAbierta] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -26,7 +50,7 @@ export default function PropiedadPage() {
         .single();
 
       if (error) {
-        console.error(error);
+        console.error('Error cargando propiedad:', error);
         setError('No fue posible cargar esta propiedad.');
         setLoading(false);
         return;
@@ -39,132 +63,322 @@ export default function PropiedadPage() {
     cargarPropiedad();
   }, [id]);
 
+  const imagenes = useMemo(() => {
+    if (
+      !propiedad ||
+      !Array.isArray(propiedad.imagenes) ||
+      propiedad.imagenes.length === 0
+    ) {
+      return [];
+    }
+
+    return propiedad.imagenes.filter(Boolean);
+  }, [propiedad]);
+
   if (loading) {
     return (
-      <main style={styles.page}>
+      <main className="page center-page">
         <p>Cargando propiedad...</p>
+
+        <Styles />
       </main>
     );
   }
 
   if (error || !propiedad) {
     return (
-      <main style={styles.page}>
-        <a href="/" style={styles.back}>
-          ← Volver al inicio
-        </a>
+      <main className="page">
+        <div className="container">
+          <a href="/" className="back">
+            <ArrowLeft size={18} />
+            Volver al inicio
+          </a>
 
-        <h1>Propiedad no encontrada</h1>
-        <p>{error}</p>
+          <div className="empty-card">
+            <h1>Propiedad no encontrada</h1>
+            <p>{error || 'La propiedad solicitada no está disponible.'}</p>
+          </div>
+        </div>
+
+        <Styles />
       </main>
     );
   }
 
-  const imagenes =
-    Array.isArray(propiedad.imagenes) && propiedad.imagenes.length > 0
-      ? propiedad.imagenes
-      : [];
+  const precio = formatearPrecio(
+    propiedad.precio,
+    propiedad.moneda
+  );
 
-  const precio =
-    propiedad.moneda === 'UF'
-      ? `${Number(propiedad.precio || 0).toLocaleString('es-CL')} UF`
-      : `$${Number(propiedad.precio || 0).toLocaleString('es-CL')}`;
+  const superficieTotal = formatearSuperficie(
+    propiedad.superficie_total,
+    propiedad.unidad_superficie
+  );
 
-  const superficie = propiedad.superficie_total
-    ? `${Number(propiedad.superficie_total).toLocaleString('es-CL')} ${
-        propiedad.unidad_superficie === 'm2'
-          ? 'm²'
-          : propiedad.unidad_superficie
-      }`
+  const superficieUtil = propiedad.superficie_util
+    ? `${Number(propiedad.superficie_util).toLocaleString('es-CL')} m²`
     : null;
 
-  const whatsapp = propiedad.telefono_contacto
-    ? `https://wa.me/${propiedad.telefono_contacto.replace(/\D/g, '')}`
+  const ubicacion = [
+    propiedad.comuna,
+    propiedad.region,
+  ]
+    .filter(Boolean)
+    .join(', ');
+
+  const latitud =
+    propiedad.latitud ??
+    propiedad.lat ??
+    null;
+
+  const longitud =
+    propiedad.longitud ??
+    propiedad.lng ??
+    null;
+
+  const tieneCoordenadas =
+    latitud !== null &&
+    longitud !== null &&
+    !Number.isNaN(Number(latitud)) &&
+    !Number.isNaN(Number(longitud));
+
+  const telefonoLimpio = propiedad.telefono_contacto
+    ? propiedad.telefono_contacto.replace(/\D/g, '')
+    : '';
+
+  const mensajeWhatsapp = encodeURIComponent(
+    `Hola, me interesa la propiedad "${propiedad.titulo}" publicada en Hecta. ¿Me pueden dar más información?`
+  );
+
+  const whatsappUrl = telefonoLimpio
+    ? `https://wa.me/${telefonoLimpio}?text=${mensajeWhatsapp}`
     : null;
+
+  const mapaUrl = tieneCoordenadas
+    ? `https://www.google.com/maps?q=${latitud},${longitud}&z=15&output=embed`
+    : null;
+
+  const googleMapsUrl = tieneCoordenadas
+    ? `https://www.google.com/maps/search/?api=1&query=${latitud},${longitud}`
+    : null;
+
+  const youtubeEmbed = getYoutubeEmbedUrl(
+    propiedad.video_youtube
+  );
+
+  function fotoAnterior() {
+    if (imagenes.length === 0) return;
+
+    setFotoActiva((actual) =>
+      actual === 0
+        ? imagenes.length - 1
+        : actual - 1
+    );
+  }
+
+  function fotoSiguiente() {
+    if (imagenes.length === 0) return;
+
+    setFotoActiva((actual) =>
+      actual === imagenes.length - 1
+        ? 0
+        : actual + 1
+    );
+  }
 
   return (
-    <main style={styles.page}>
-      <div style={styles.container}>
-        <a href="/" style={styles.back}>
-          ← Volver a propiedades
+    <main className="page">
+      <div className="container">
+
+        {/* VOLVER */}
+
+        <a href="/#propiedades" className="back">
+          <ArrowLeft size={18} />
+          Volver a propiedades
         </a>
 
-        <section style={styles.header}>
-          <div>
-            <p style={styles.operation}>
-              {propiedad.operacion || 'Venta'}
-            </p>
+        {/* ENCABEZADO */}
 
-            <h1 style={styles.title}>
+        <section className="property-header">
+          <div className="header-copy">
+            <span className="operation">
+              {propiedad.operacion || 'Venta'}
+            </span>
+
+            <h1>
               {propiedad.titulo}
             </h1>
 
-            <p style={styles.location}>
-              {[propiedad.comuna, propiedad.region]
-                .filter(Boolean)
-                .join(', ')}
-            </p>
+            <div className="location">
+              <MapPin size={19} />
+
+              <span>
+                {ubicacion || 'Ubicación por confirmar'}
+              </span>
+            </div>
           </div>
 
-          <div style={styles.price}>
+          <div className="price">
             {precio}
           </div>
         </section>
 
-        <section style={styles.gallery}>
+        {/* GALERÍA */}
+
+        <section className="gallery">
           {imagenes.length > 0 ? (
             <>
-              <img
-                src={imagenes[0]}
-                alt={propiedad.titulo}
-                style={styles.mainImage}
-              />
+              <div
+                className="main-photo"
+                onClick={() => setGaleriaAbierta(true)}
+              >
+                <img
+                  src={imagenes[0]}
+                  alt={propiedad.titulo}
+                />
+
+                <button
+                  type="button"
+                  className="photos-button"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    setFotoActiva(0);
+                    setGaleriaAbierta(true);
+                  }}
+                >
+                  <Images size={18} />
+
+                  Ver {imagenes.length}{' '}
+                  {imagenes.length === 1
+                    ? 'foto'
+                    : 'fotos'}
+                </button>
+              </div>
 
               {imagenes.length > 1 && (
-                <div style={styles.thumbGrid}>
-                  {imagenes.slice(1, 5).map((imagen, index) => (
-                    <img
-                      key={index}
-                      src={imagen}
-                      alt={`${propiedad.titulo} ${index + 2}`}
-                      style={styles.thumb}
-                    />
-                  ))}
+                <div className="side-photos">
+                  {imagenes
+                    .slice(1, 5)
+                    .map((imagen, index) => (
+                      <button
+                        type="button"
+                        className="mini-photo"
+                        key={`${imagen}-${index}`}
+                        onClick={() => {
+                          setFotoActiva(index + 1);
+                          setGaleriaAbierta(true);
+                        }}
+                      >
+                        <img
+                          src={imagen}
+                          alt={`${propiedad.titulo} ${
+                            index + 2
+                          }`}
+                        />
+
+                        {index === 3 &&
+                          imagenes.length > 5 && (
+                            <span className="more-overlay">
+                              +{imagenes.length - 5}
+                            </span>
+                          )}
+                      </button>
+                    ))}
                 </div>
               )}
             </>
           ) : (
-            <div style={styles.noImage}>
-              Sin fotografías
+            <div className="no-image">
+              <Images size={44} />
+              <span>Sin fotografías</span>
             </div>
           )}
         </section>
 
-        <div style={styles.columns}>
-          <section style={styles.mainContent}>
-            <div style={styles.card}>
-              <h2>Descripción</h2>
+        {/* CONTENIDO */}
 
-              <p style={styles.description}>
-                {propiedad.descripcion || 'Sin descripción disponible.'}
-              </p>
-            </div>
+        <div className="content-layout">
 
-            <div style={styles.card}>
-              <h2>Características</h2>
+          <div className="main-content">
 
-              <div style={styles.features}>
-                {superficie && (
-                  <Feature
+            {/* RESUMEN */}
+
+            <section className="info-card">
+              <h2>Información principal</h2>
+
+              <div className="quick-features">
+
+                {superficieTotal && (
+                  <QuickFeature
+                    icon={Ruler}
                     label="Superficie"
-                    value={superficie}
+                    value={superficieTotal}
                   />
                 )}
 
+                {propiedad.dormitorios != null && (
+                  <QuickFeature
+                    icon={BedDouble}
+                    label="Dormitorios"
+                    value={propiedad.dormitorios}
+                  />
+                )}
+
+                {propiedad.banos != null && (
+                  <QuickFeature
+                    icon={Bath}
+                    label="Baños"
+                    value={propiedad.banos}
+                  />
+                )}
+
+                {propiedad.estacionamientos != null && (
+                  <QuickFeature
+                    icon={Car}
+                    label="Estacionamientos"
+                    value={propiedad.estacionamientos}
+                  />
+                )}
+
+              </div>
+            </section>
+
+            {/* DESCRIPCIÓN */}
+
+            <section className="info-card">
+              <h2>Descripción</h2>
+
+              <p className="description">
+                {propiedad.descripcion ||
+                  'Sin descripción disponible.'}
+              </p>
+            </section>
+
+            {/* CARACTERÍSTICAS */}
+
+            <section className="info-card">
+              <h2>Características</h2>
+
+              <div className="features-grid">
+
                 {propiedad.tipo && (
                   <Feature
-                    label="Tipo"
+                    label="Tipo de propiedad"
                     value={propiedad.tipo}
+                  />
+                )}
+
+                {superficieTotal && (
+                  <Feature
+                    label="Superficie total"
+                    value={superficieTotal}
+                  />
+                )}
+
+                {superficieUtil && (
+                  <Feature
+                    label="Superficie útil"
+                    value={superficieUtil}
                   />
                 )}
 
@@ -185,7 +399,9 @@ export default function PropiedadPage() {
                 {propiedad.estacionamientos != null && (
                   <Feature
                     label="Estacionamientos"
-                    value={propiedad.estacionamientos}
+                    value={
+                      propiedad.estacionamientos
+                    }
                   />
                 )}
 
@@ -196,59 +412,145 @@ export default function PropiedadPage() {
                   />
                 )}
 
-                <Feature
+              </div>
+
+              <div className="services-grid">
+
+                <Service
+                  icon={Droplets}
                   label="Agua"
                   value={formatFactibilidad(
                     propiedad.factibilidad_agua
                   )}
                 />
 
-                <Feature
+                <Service
+                  icon={Zap}
                   label="Electricidad"
                   value={formatFactibilidad(
                     propiedad.factibilidad_luz
                   )}
                 />
-              </div>
-            </div>
 
-            {propiedad.direccion && (
-              <div style={styles.card}>
-                <h2>Ubicación</h2>
-                <p>{propiedad.direccion}</p>
+                {propiedad.bodegas != null && (
+                  <Service
+                    icon={Warehouse}
+                    label="Bodega"
+                    value={
+                      propiedad.bodegas > 0
+                        ? 'Sí'
+                        : 'No'
+                    }
+                  />
+                )}
+
               </div>
+            </section>
+
+            {/* MAPA */}
+
+            {(tieneCoordenadas ||
+              propiedad.direccion) && (
+              <section className="info-card">
+                <div className="section-title-row">
+                  <div>
+                    <h2>Ubicación</h2>
+
+                    {propiedad.direccion && (
+                      <p className="address">
+                        {propiedad.direccion}
+                      </p>
+                    )}
+                  </div>
+
+                  {googleMapsUrl && (
+                    <a
+                      href={googleMapsUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="map-link"
+                    >
+                      Abrir en Google Maps
+                      <ExternalLink size={16} />
+                    </a>
+                  )}
+                </div>
+
+                {mapaUrl && (
+                  <div className="map-wrapper">
+                    <iframe
+                      src={mapaUrl}
+                      title={`Mapa de ${propiedad.titulo}`}
+                      loading="lazy"
+                      referrerPolicy="no-referrer-when-downgrade"
+                    />
+                  </div>
+                )}
+              </section>
             )}
+
+            {/* VIDEO */}
 
             {propiedad.video_youtube && (
-              <div style={styles.card}>
+              <section className="info-card">
                 <h2>Video</h2>
 
-                <a
-                  href={propiedad.video_youtube}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  Ver video en YouTube
-                </a>
-              </div>
+                {youtubeEmbed ? (
+                  <div className="video-wrapper">
+                    <iframe
+                      src={youtubeEmbed}
+                      title={`Video de ${propiedad.titulo}`}
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                    />
+                  </div>
+                ) : (
+                  <a
+                    href={propiedad.video_youtube}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="youtube-link"
+                  >
+                    <PlayCircle size={21} />
+                    Ver video en YouTube
+                  </a>
+                )}
+              </section>
             )}
-          </section>
 
-          <aside style={styles.sidebar}>
-            <div style={styles.contactCard}>
-              <h2>¿Te interesa esta propiedad?</h2>
+          </div>
+
+          {/* CONTACTO */}
+
+          <aside className="sidebar">
+            <div className="contact-card">
+
+              <span className="contact-eyebrow">
+                CONTACTA A HECTA
+              </span>
+
+              <h2>
+                ¿Te interesa esta propiedad?
+              </h2>
 
               <p>
-                Contáctanos para más información o coordinar una visita.
+                Solicita más información o coordina
+                una visita con nuestro equipo.
               </p>
 
-              {whatsapp && (
+              <div className="contact-price">
+                <span>Precio</span>
+                <strong>{precio}</strong>
+              </div>
+
+              {whatsappUrl && (
                 <a
-                  href={whatsapp}
+                  href={whatsappUrl}
                   target="_blank"
                   rel="noreferrer"
-                  style={styles.whatsapp}
+                  className="whatsapp-button"
                 >
+                  <MessageCircle size={20} />
                   Consultar por WhatsApp
                 </a>
               )}
@@ -256,217 +558,903 @@ export default function PropiedadPage() {
               {propiedad.telefono_contacto && (
                 <a
                   href={`tel:${propiedad.telefono_contacto}`}
-                  style={styles.secondary}
+                  className="secondary-button"
                 >
+                  <Phone size={19} />
                   Llamar
                 </a>
               )}
 
               {propiedad.email_contacto && (
                 <a
-                  href={`mailto:${propiedad.email_contacto}`}
-                  style={styles.secondary}
+                  href={`mailto:${propiedad.email_contacto}?subject=${encodeURIComponent(
+                    `Consulta por ${propiedad.titulo}`
+                  )}`}
+                  className="secondary-button"
                 >
+                  <Mail size={19} />
                   Enviar correo
                 </a>
               )}
+
+              {propiedad.nombre_contacto && (
+                <div className="contact-person">
+                  <span>Contacto</span>
+                  <strong>
+                    {propiedad.nombre_contacto}
+                  </strong>
+                </div>
+              )}
+
             </div>
           </aside>
+
         </div>
       </div>
+
+      {/* LIGHTBOX */}
+
+      {galeriaAbierta && imagenes.length > 0 && (
+        <div
+          className="lightbox"
+          role="dialog"
+          aria-modal="true"
+        >
+          <button
+            type="button"
+            className="close-lightbox"
+            onClick={() =>
+              setGaleriaAbierta(false)
+            }
+            aria-label="Cerrar galería"
+          >
+            <X size={30} />
+          </button>
+
+          {imagenes.length > 1 && (
+            <button
+              type="button"
+              className="gallery-arrow gallery-left"
+              onClick={fotoAnterior}
+              aria-label="Foto anterior"
+            >
+              <ChevronLeft size={38} />
+            </button>
+          )}
+
+          <div className="lightbox-content">
+            <img
+              src={imagenes[fotoActiva]}
+              alt={`${propiedad.titulo} ${
+                fotoActiva + 1
+              }`}
+            />
+
+            <span>
+              {fotoActiva + 1} / {imagenes.length}
+            </span>
+          </div>
+
+          {imagenes.length > 1 && (
+            <button
+              type="button"
+              className="gallery-arrow gallery-right"
+              onClick={fotoSiguiente}
+              aria-label="Foto siguiente"
+            >
+              <ChevronRight size={38} />
+            </button>
+          )}
+        </div>
+      )}
+
+      <Styles />
     </main>
   );
 }
 
-function Feature({ label, value }) {
+function QuickFeature({
+  icon: Icon,
+  label,
+  value,
+}) {
   return (
-    <div style={styles.feature}>
-      <span style={styles.featureLabel}>
-        {label}
-      </span>
+    <div className="quick-feature">
+      <Icon size={25} />
 
-      <strong>
-        {value}
-      </strong>
+      <div>
+        <strong>{value}</strong>
+        <span>{label}</span>
+      </div>
     </div>
   );
 }
 
+function Feature({ label, value }) {
+  if (
+    value === null ||
+    value === undefined ||
+    value === ''
+  ) {
+    return null;
+  }
+
+  return (
+    <div className="feature">
+      <span>{label}</span>
+      <strong>{value}</strong>
+    </div>
+  );
+}
+
+function Service({
+  icon: Icon,
+  label,
+  value,
+}) {
+  return (
+    <div className="service">
+      <div className="service-icon">
+        <Icon size={23} />
+      </div>
+
+      <div>
+        <span>{label}</span>
+        <strong>{value}</strong>
+      </div>
+    </div>
+  );
+}
+
+function formatearPrecio(precio, moneda) {
+  if (
+    precio === null ||
+    precio === undefined
+  ) {
+    return 'Precio a consultar';
+  }
+
+  const numero =
+    Number(precio).toLocaleString('es-CL');
+
+  if (moneda === 'UF') {
+    return `${numero} UF`;
+  }
+
+  return `$${numero}`;
+}
+
+function formatearSuperficie(
+  superficie,
+  unidad
+) {
+  if (
+    superficie === null ||
+    superficie === undefined
+  ) {
+    return null;
+  }
+
+  const numero =
+    Number(superficie).toLocaleString('es-CL');
+
+  let unidadFinal = unidad || 'm2';
+
+  if (unidadFinal === 'm2') {
+    unidadFinal = 'm²';
+  }
+
+  return `${numero} ${unidadFinal}`;
+}
+
 function formatFactibilidad(valor) {
-  if (valor === 'si') return 'Sí';
-  if (valor === 'no') return 'No';
+  if (valor === 'si') {
+    return 'Disponible';
+  }
+
+  if (valor === 'no') {
+    return 'No disponible';
+  }
+
   return 'Por confirmar';
 }
 
-const styles = {
-  page: {
-    minHeight: '100vh',
-    background: '#f6f4ee',
-    color: '#102335',
-    padding: '30px 20px 80px',
-  },
+function getYoutubeEmbedUrl(url) {
+  if (!url) return null;
 
-  container: {
-    maxWidth: 1200,
-    margin: '0 auto',
-  },
+  try {
+    const parsedUrl = new URL(url);
 
-  back: {
-    display: 'inline-block',
-    marginBottom: 24,
-    color: '#0c5138',
-    fontWeight: 700,
-    textDecoration: 'none',
-  },
+    if (
+      parsedUrl.hostname.includes(
+        'youtube.com'
+      )
+    ) {
+      const videoId =
+        parsedUrl.searchParams.get('v');
 
-  header: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    gap: 30,
-    alignItems: 'flex-end',
-    flexWrap: 'wrap',
-    marginBottom: 28,
-  },
+      if (videoId) {
+        return `https://www.youtube.com/embed/${videoId}`;
+      }
 
-  operation: {
-    margin: 0,
-    color: '#aa8438',
-    fontWeight: 800,
-    textTransform: 'uppercase',
-    letterSpacing: '.08em',
-  },
+      if (
+        parsedUrl.pathname.startsWith(
+          '/embed/'
+        )
+      ) {
+        return url;
+      }
+    }
 
-  title: {
-    margin: '8px 0',
-    fontSize: 'clamp(34px,5vw,58px)',
-    lineHeight: 1.05,
-    color: '#0b3c2a',
-  },
+    if (
+      parsedUrl.hostname === 'youtu.be'
+    ) {
+      const videoId =
+        parsedUrl.pathname.replace('/', '');
 
-  location: {
-    margin: 0,
-    color: '#67716c',
-    fontSize: 18,
-  },
+      if (videoId) {
+        return `https://www.youtube.com/embed/${videoId}`;
+      }
+    }
 
-  price: {
-    fontSize: 34,
-    fontWeight: 900,
-    color: '#0b5137',
-  },
+    return null;
+  } catch {
+    return null;
+  }
+}
 
-  gallery: {
-    marginBottom: 34,
-  },
+function Styles() {
+  return (
+    <style jsx global>{`
+      * {
+        box-sizing: border-box;
+      }
 
-  mainImage: {
-    width: '100%',
-    height: 520,
-    objectFit: 'cover',
-    borderRadius: 22,
-    display: 'block',
-  },
+      .page {
+        min-height: 100vh;
+        background: #f6f4ee;
+        color: #102335;
+        padding: 32px 22px 80px;
+      }
 
-  thumbGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(4, 1fr)',
-    gap: 12,
-    marginTop: 12,
-  },
+      .center-page {
+        display: grid;
+        place-items: center;
+      }
 
-  thumb: {
-    width: '100%',
-    height: 150,
-    objectFit: 'cover',
-    borderRadius: 14,
-  },
+      .container {
+        width: 100%;
+        max-width: 1380px;
+        margin: 0 auto;
+      }
 
-  noImage: {
-    height: 350,
-    display: 'grid',
-    placeItems: 'center',
-    background: '#e8e5dd',
-    borderRadius: 22,
-    color: '#66716b',
-  },
+      .back {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        margin-bottom: 28px;
+        color: #0b5137;
+        font-weight: 800;
+        text-decoration: none;
+      }
 
-  columns: {
-    display: 'grid',
-    gridTemplateColumns: 'minmax(0, 2fr) minmax(280px, 1fr)',
-    gap: 28,
-    alignItems: 'start',
-  },
+      .property-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        gap: 30px;
+        margin-bottom: 30px;
+      }
 
-  mainContent: {
-    display: 'grid',
-    gap: 20,
-  },
+      .header-copy {
+        max-width: 900px;
+      }
 
-  card: {
-    background: '#fff',
-    border: '1px solid #dedbd1',
-    borderRadius: 18,
-    padding: 26,
-  },
+      .operation {
+        display: inline-block;
+        color: #aa8438;
+        font-size: 15px;
+        font-weight: 900;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        margin-bottom: 12px;
+      }
 
-  description: {
-    lineHeight: 1.75,
-    color: '#445049',
-    whiteSpace: 'pre-line',
-  },
+      .property-header h1 {
+        margin: 0 0 12px;
+        color: #0a412d;
+        font-size: clamp(
+          38px,
+          5vw,
+          70px
+        );
+        line-height: 1.02;
+        letter-spacing: -0.035em;
+      }
 
-  features: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))',
-    gap: 14,
-  },
+      .location {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        color: #69746f;
+        font-size: 19px;
+      }
 
-  feature: {
-    padding: 16,
-    background: '#f7f6f1',
-    borderRadius: 12,
-    display: 'grid',
-    gap: 6,
-  },
+      .price {
+        color: #0b5137;
+        font-size: clamp(
+          29px,
+          3vw,
+          43px
+        );
+        font-weight: 900;
+        white-space: nowrap;
+      }
 
-  featureLabel: {
-    fontSize: 13,
-    color: '#6b756f',
-  },
+      .gallery {
+        display: grid;
+        grid-template-columns: minmax(
+            0,
+            2fr
+          ) minmax(300px, 0.75fr);
+        gap: 10px;
+        height: 580px;
+        margin-bottom: 34px;
+        overflow: hidden;
+        border-radius: 22px;
+      }
 
-  sidebar: {
-    position: 'sticky',
-    top: 24,
-  },
+      .main-photo {
+        position: relative;
+        overflow: hidden;
+        cursor: pointer;
+        background: #e5e2d9;
+      }
 
-  contactCard: {
-    background: '#0b5137',
-    color: '#fff',
-    borderRadius: 20,
-    padding: 26,
-    display: 'grid',
-    gap: 14,
-  },
+      .main-photo > img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        transition: transform 0.25s ease;
+      }
 
-  whatsapp: {
-    display: 'block',
-    textAlign: 'center',
-    background: '#fff',
-    color: '#0b5137',
-    padding: '14px 18px',
-    borderRadius: 12,
-    fontWeight: 800,
-    textDecoration: 'none',
-  },
+      .main-photo:hover > img {
+        transform: scale(1.015);
+      }
 
-  secondary: {
-    display: 'block',
-    textAlign: 'center',
-    border: '1px solid rgba(255,255,255,.4)',
-    color: '#fff',
-    padding: '12px 18px',
-    borderRadius: 12,
-    fontWeight: 700,
-    textDecoration: 'none',
-  },
-};
+      .photos-button {
+        position: absolute;
+        right: 18px;
+        bottom: 18px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        border: 0;
+        border-radius: 10px;
+        padding: 12px 16px;
+        background: rgba(
+          255,
+          255,
+          255,
+          0.94
+        );
+        color: #102335;
+        font-weight: 800;
+        cursor: pointer;
+        box-shadow: 0 4px 20px
+          rgba(0, 0, 0, 0.12);
+      }
+
+      .side-photos {
+        display: grid;
+        grid-template-columns: 1fr;
+        grid-template-rows: repeat(
+          4,
+          1fr
+        );
+        gap: 10px;
+        min-height: 0;
+      }
+
+      .mini-photo {
+        position: relative;
+        width: 100%;
+        min-height: 0;
+        border: 0;
+        padding: 0;
+        overflow: hidden;
+        cursor: pointer;
+        background: #e5e2d9;
+      }
+
+      .mini-photo img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+
+      .more-overlay {
+        position: absolute;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        background: rgba(
+          5,
+          35,
+          26,
+          0.58
+        );
+        color: white;
+        font-size: 28px;
+        font-weight: 900;
+      }
+
+      .no-image {
+        grid-column: 1 / -1;
+        display: grid;
+        place-items: center;
+        align-content: center;
+        gap: 12px;
+        min-height: 400px;
+        background: #e9e6dd;
+        color: #68736d;
+      }
+
+      .content-layout {
+        display: grid;
+        grid-template-columns:
+          minmax(0, 2fr)
+          minmax(320px, 0.8fr);
+        gap: 30px;
+        align-items: start;
+      }
+
+      .main-content {
+        display: grid;
+        gap: 22px;
+      }
+
+      .info-card {
+        background: white;
+        border: 1px solid #dfdbd0;
+        border-radius: 20px;
+        padding: 30px;
+      }
+
+      .info-card h2 {
+        margin: 0 0 22px;
+        color: #0c402e;
+        font-size: 25px;
+      }
+
+      .quick-features {
+        display: grid;
+        grid-template-columns:
+          repeat(
+            auto-fit,
+            minmax(180px, 1fr)
+          );
+        gap: 15px;
+      }
+
+      .quick-feature {
+        display: flex;
+        align-items: center;
+        gap: 13px;
+        padding: 17px;
+        background: #f7f5ef;
+        border-radius: 14px;
+        color: #0b5137;
+      }
+
+      .quick-feature div {
+        display: grid;
+        gap: 3px;
+      }
+
+      .quick-feature strong {
+        color: #102335;
+        font-size: 17px;
+      }
+
+      .quick-feature span {
+        color: #707973;
+        font-size: 13px;
+      }
+
+      .description {
+        margin: 0;
+        color: #47534d;
+        line-height: 1.8;
+        font-size: 17px;
+        white-space: pre-line;
+      }
+
+      .features-grid {
+        display: grid;
+        grid-template-columns:
+          repeat(
+            auto-fit,
+            minmax(190px, 1fr)
+          );
+        gap: 12px;
+      }
+
+      .feature {
+        display: grid;
+        gap: 6px;
+        padding: 16px;
+        border-radius: 12px;
+        background: #f7f5ef;
+      }
+
+      .feature span {
+        color: #747d77;
+        font-size: 13px;
+      }
+
+      .feature strong {
+        color: #102335;
+      }
+
+      .services-grid {
+        display: grid;
+        grid-template-columns:
+          repeat(
+            auto-fit,
+            minmax(180px, 1fr)
+          );
+        gap: 12px;
+        margin-top: 18px;
+      }
+
+      .service {
+        display: flex;
+        align-items: center;
+        gap: 11px;
+        border: 1px solid #e4e0d5;
+        border-radius: 13px;
+        padding: 14px;
+      }
+
+      .service-icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        background: #f3efe4;
+        color: #0b5137;
+      }
+
+      .service > div:last-child {
+        display: grid;
+        gap: 3px;
+      }
+
+      .service span {
+        color: #747d77;
+        font-size: 12px;
+      }
+
+      .section-title-row {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 20px;
+        margin-bottom: 18px;
+      }
+
+      .section-title-row h2 {
+        margin-bottom: 5px;
+      }
+
+      .address {
+        margin: 0;
+        color: #67726d;
+      }
+
+      .map-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        color: #0b5137;
+        font-weight: 800;
+        text-decoration: none;
+        white-space: nowrap;
+      }
+
+      .map-wrapper {
+        height: 390px;
+        overflow: hidden;
+        border-radius: 15px;
+      }
+
+      .map-wrapper iframe {
+        width: 100%;
+        height: 100%;
+        border: 0;
+      }
+
+      .video-wrapper {
+        position: relative;
+        overflow: hidden;
+        border-radius: 15px;
+        padding-top: 56.25%;
+      }
+
+      .video-wrapper iframe {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        border: 0;
+      }
+
+      .youtube-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 9px;
+        color: #0b5137;
+        font-weight: 800;
+        text-decoration: none;
+      }
+
+      .sidebar {
+        position: sticky;
+        top: 24px;
+      }
+
+      .contact-card {
+        display: grid;
+        gap: 15px;
+        padding: 28px;
+        border-radius: 22px;
+        background: #084c35;
+        color: white;
+        box-shadow: 0 15px 40px
+          rgba(4, 55, 38, 0.15);
+      }
+
+      .contact-eyebrow {
+        color: #e0bb68;
+        font-size: 12px;
+        font-weight: 900;
+        letter-spacing: 0.11em;
+      }
+
+      .contact-card h2 {
+        margin: 0;
+        font-size: 27px;
+        line-height: 1.15;
+      }
+
+      .contact-card > p {
+        margin: 0 0 4px;
+        color: rgba(
+          255,
+          255,
+          255,
+          0.82
+        );
+        line-height: 1.55;
+      }
+
+      .contact-price {
+        display: grid;
+        gap: 4px;
+        padding: 15px 0 18px;
+        border-bottom: 1px solid
+          rgba(255, 255, 255, 0.16);
+      }
+
+      .contact-price span {
+        font-size: 12px;
+        color: rgba(
+          255,
+          255,
+          255,
+          0.7
+        );
+      }
+
+      .contact-price strong {
+        font-size: 25px;
+      }
+
+      .whatsapp-button,
+      .secondary-button {
+        min-height: 50px;
+        border-radius: 11px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 9px;
+        padding: 10px 14px;
+        font-weight: 850;
+        text-decoration: none;
+      }
+
+      .whatsapp-button {
+        background: white;
+        color: #084c35;
+      }
+
+      .secondary-button {
+        border: 1px solid
+          rgba(255, 255, 255, 0.35);
+        color: white;
+      }
+
+      .contact-person {
+        display: grid;
+        gap: 3px;
+        padding-top: 8px;
+      }
+
+      .contact-person span {
+        font-size: 12px;
+        color: rgba(
+          255,
+          255,
+          255,
+          0.67
+        );
+      }
+
+      .lightbox {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        display: grid;
+        place-items: center;
+        background: rgba(
+          4,
+          15,
+          11,
+          0.95
+        );
+        padding: 35px 80px;
+      }
+
+      .lightbox-content {
+        max-width: 1250px;
+        width: 100%;
+        display: grid;
+        justify-items: center;
+        gap: 13px;
+      }
+
+      .lightbox-content img {
+        max-width: 100%;
+        max-height: 84vh;
+        object-fit: contain;
+      }
+
+      .lightbox-content span {
+        color: white;
+        font-weight: 700;
+      }
+
+      .close-lightbox,
+      .gallery-arrow {
+        border: 0;
+        color: white;
+        background: transparent;
+        cursor: pointer;
+      }
+
+      .close-lightbox {
+        position: absolute;
+        right: 25px;
+        top: 23px;
+      }
+
+      .gallery-arrow {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+      }
+
+      .gallery-left {
+        left: 20px;
+      }
+
+      .gallery-right {
+        right: 20px;
+      }
+
+      .empty-card {
+        padding: 40px;
+        background: white;
+        border-radius: 18px;
+      }
+
+      @media (
+        max-width: 980px
+      ) {
+        .property-header {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+
+        .gallery {
+          grid-template-columns: 1fr;
+          height: auto;
+        }
+
+        .main-photo {
+          height: 450px;
+          border-radius: 20px;
+        }
+
+        .side-photos {
+          grid-template-columns:
+            repeat(4, 1fr);
+          grid-template-rows: 120px;
+        }
+
+        .content-layout {
+          grid-template-columns: 1fr;
+        }
+
+        .sidebar {
+          position: static;
+        }
+      }
+
+      @media (
+        max-width: 620px
+      ) {
+        .page {
+          padding: 20px 14px 60px;
+        }
+
+        .property-header h1 {
+          font-size: 39px;
+        }
+
+        .price {
+          font-size: 29px;
+        }
+
+        .main-photo {
+          height: 320px;
+        }
+
+        .side-photos {
+          grid-template-columns:
+            repeat(2, 1fr);
+          grid-template-rows:
+            repeat(2, 100px);
+        }
+
+        .info-card {
+          padding: 21px;
+        }
+
+        .section-title-row {
+          flex-direction: column;
+        }
+
+        .map-wrapper {
+          height: 300px;
+        }
+
+        .lightbox {
+          padding: 60px 12px 30px;
+        }
+
+        .gallery-left {
+          left: 2px;
+        }
+
+        .gallery-right {
+          right: 2px;
+        }
+      }
+    `}</style>
+  );
+}
