@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
+
 import {
   ArrowLeft,
   Bath,
@@ -51,7 +52,11 @@ export default function PropiedadPage() {
 
       if (error) {
         console.error('Error cargando propiedad:', error);
-        setError('No fue posible cargar esta propiedad.');
+
+        setError(
+          'No fue posible cargar esta propiedad.'
+        );
+
         setLoading(false);
         return;
       }
@@ -79,7 +84,6 @@ export default function PropiedadPage() {
     return (
       <main className="page center-page">
         <p>Cargando propiedad...</p>
-
         <Styles />
       </main>
     );
@@ -89,15 +93,23 @@ export default function PropiedadPage() {
     return (
       <main className="page">
         <div className="container">
+
           <a href="/" className="back">
             <ArrowLeft size={18} />
             Volver al inicio
           </a>
 
           <div className="empty-card">
-            <h1>Propiedad no encontrada</h1>
-            <p>{error || 'La propiedad solicitada no está disponible.'}</p>
+            <h1>
+              Propiedad no encontrada
+            </h1>
+
+            <p>
+              {error ||
+                'La propiedad solicitada no está disponible.'}
+            </p>
           </div>
+
         </div>
 
         <Styles />
@@ -115,9 +127,12 @@ export default function PropiedadPage() {
     propiedad.unidad_superficie
   );
 
-  const superficieUtil = propiedad.superficie_util
-    ? `${Number(propiedad.superficie_util).toLocaleString('es-CL')} m²`
-    : null;
+  const superficieUtil =
+    propiedad.superficie_util
+      ? `${Number(
+          propiedad.superficie_util
+        ).toLocaleString('es-CL')} m²`
+      : null;
 
   const ubicacion = [
     propiedad.comuna,
@@ -142,32 +157,43 @@ export default function PropiedadPage() {
     !Number.isNaN(Number(latitud)) &&
     !Number.isNaN(Number(longitud));
 
-  const telefonoLimpio = propiedad.telefono_contacto
-    ? propiedad.telefono_contacto.replace(/\D/g, '')
-    : '';
+  const telefonoLimpio =
+    propiedad.telefono_contacto
+      ? propiedad.telefono_contacto.replace(
+          /\D/g,
+          ''
+        )
+      : '';
 
-  const mensajeWhatsapp = encodeURIComponent(
-    `Hola, me interesa la propiedad "${propiedad.titulo}" publicada en Hecta. ¿Me pueden dar más información?`
-  );
+  const mensajeWhatsapp =
+    encodeURIComponent(
+      `Hola, me interesa la propiedad "${propiedad.titulo}" publicada en Hecta. ¿Me pueden dar más información?`
+    );
 
-  const whatsappUrl = telefonoLimpio
-    ? `https://wa.me/${telefonoLimpio}?text=${mensajeWhatsapp}`
-    : null;
+  const whatsappUrl =
+    telefonoLimpio
+      ? `https://wa.me/${telefonoLimpio}?text=${mensajeWhatsapp}`
+      : null;
 
-  const mapaUrl = tieneCoordenadas
-    ? `https://www.google.com/maps?q=${latitud},${longitud}&z=15&output=embed`
-    : null;
+  const mapaUrl =
+    tieneCoordenadas
+      ? `https://www.google.com/maps?q=${latitud},${longitud}&z=15&output=embed`
+      : null;
 
-  const googleMapsUrl = tieneCoordenadas
-    ? `https://www.google.com/maps/search/?api=1&query=${latitud},${longitud}`
-    : null;
+  const googleMapsUrl =
+    tieneCoordenadas
+      ? `https://www.google.com/maps/search/?api=1&query=${latitud},${longitud}`
+      : null;
 
-  const youtubeEmbed = getYoutubeEmbedUrl(
-    propiedad.video_youtube
-  );
+  const youtubeEmbed =
+    getYoutubeEmbedUrl(
+      propiedad.video_youtube
+    );
 
   function fotoAnterior() {
-    if (imagenes.length === 0) return;
+    if (imagenes.length === 0) {
+      return;
+    }
 
     setFotoActiva((actual) =>
       actual === 0
@@ -177,7 +203,9 @@ export default function PropiedadPage() {
   }
 
   function fotoSiguiente() {
-    if (imagenes.length === 0) return;
+    if (imagenes.length === 0) {
+      return;
+    }
 
     setFotoActiva((actual) =>
       actual === imagenes.length - 1
@@ -186,184 +214,223 @@ export default function PropiedadPage() {
     );
   }
 
+  function abrirFoto(index) {
+    setFotoActiva(index);
+    setGaleriaAbierta(true);
+  }
+
   return (
     <main className="page">
+
       <div className="container">
 
-        {/* VOLVER */}
+        {/* NAVEGACIÓN */}
 
-        <a href="/#propiedades" className="back">
-          <ArrowLeft size={18} />
-          Volver a propiedades
-        </a>
+        <div className="breadcrumb-row">
 
-        {/* ENCABEZADO */}
+          <a
+            href="/#propiedades"
+            className="back"
+          >
+            <ArrowLeft size={17} />
+            Volver a propiedades
+          </a>
 
-        <section className="property-header">
-          <div className="header-copy">
-            <span className="operation">
-              {propiedad.operacion || 'Venta'}
-            </span>
+          <span className="breadcrumb">
+            {propiedad.tipo || 'Propiedad'}
+            {' · '}
+            {propiedad.operacion || 'Venta'}
+            {propiedad.comuna
+              ? ` · ${propiedad.comuna}`
+              : ''}
+          </span>
 
-            <h1>
-              {propiedad.titulo}
-            </h1>
+        </div>
 
-            <div className="location">
-              <MapPin size={19} />
+        {/* BLOQUE SUPERIOR */}
 
-              <span>
-                {ubicacion || 'Ubicación por confirmar'}
+        <section className="top-layout">
+
+          {/* IZQUIERDA */}
+
+          <div className="visual-column">
+
+            <Gallery
+              imagenes={imagenes}
+              titulo={propiedad.titulo}
+              onOpen={abrirFoto}
+            />
+
+          </div>
+
+          {/* DERECHA */}
+
+          <aside className="summary-column">
+
+            <div className="summary-card">
+
+              <span className="property-type">
+                {propiedad.tipo || 'Propiedad'}{' '}
+                en{' '}
+                {propiedad.operacion || 'Venta'}
               </span>
-            </div>
-          </div>
 
-          <div className="price">
-            {precio}
-          </div>
-        </section>
+              <h1>
+                {propiedad.titulo}
+              </h1>
 
-        {/* GALERÍA */}
+              <div className="summary-location">
+                <MapPin size={18} />
 
-        <section className="gallery">
-          {imagenes.length > 0 ? (
-            <>
-              <div
-                className="main-photo"
-                onClick={() => setGaleriaAbierta(true)}
-              >
-                <img
-                  src={imagenes[0]}
-                  alt={propiedad.titulo}
-                />
-
-                <button
-                  type="button"
-                  className="photos-button"
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    setFotoActiva(0);
-                    setGaleriaAbierta(true);
-                  }}
-                >
-                  <Images size={18} />
-
-                  Ver {imagenes.length}{' '}
-                  {imagenes.length === 1
-                    ? 'foto'
-                    : 'fotos'}
-                </button>
+                <span>
+                  {ubicacion ||
+                    'Ubicación por confirmar'}
+                </span>
               </div>
 
-              {imagenes.length > 1 && (
-                <div className="side-photos">
-                  {imagenes
-                    .slice(1, 5)
-                    .map((imagen, index) => (
-                      <button
-                        type="button"
-                        className="mini-photo"
-                        key={`${imagen}-${index}`}
-                        onClick={() => {
-                          setFotoActiva(index + 1);
-                          setGaleriaAbierta(true);
-                        }}
-                      >
-                        <img
-                          src={imagen}
-                          alt={`${propiedad.titulo} ${
-                            index + 2
-                          }`}
-                        />
+              <div className="summary-price">
+                {precio}
+              </div>
 
-                        {index === 3 &&
-                          imagenes.length > 5 && (
-                            <span className="more-overlay">
-                              +{imagenes.length - 5}
-                            </span>
-                          )}
-                      </button>
-                    ))}
+              <div className="summary-divider" />
+
+              <div className="summary-features">
+
+                {superficieTotal && (
+                  <SummaryFeature
+                    icon={Ruler}
+                    value={superficieTotal}
+                    label="Superficie total"
+                  />
+                )}
+
+                {propiedad.dormitorios != null &&
+                  propiedad.dormitorios > 0 && (
+                    <SummaryFeature
+                      icon={BedDouble}
+                      value={propiedad.dormitorios}
+                      label="Dormitorios"
+                    />
+                  )}
+
+                {propiedad.banos != null &&
+                  propiedad.banos > 0 && (
+                    <SummaryFeature
+                      icon={Bath}
+                      value={propiedad.banos}
+                      label="Baños"
+                    />
+                  )}
+
+                {propiedad.estacionamientos !=
+                  null &&
+                  propiedad.estacionamientos >
+                    0 && (
+                    <SummaryFeature
+                      icon={Car}
+                      value={
+                        propiedad.estacionamientos
+                      }
+                      label="Estacionamientos"
+                    />
+                  )}
+
+              </div>
+
+              {(propiedad.factibilidad_agua ||
+                propiedad.factibilidad_luz) && (
+                <div className="factibilities">
+
+                  <SmallFact
+                    icon={Droplets}
+                    label="Agua"
+                    value={formatFactibilidad(
+                      propiedad.factibilidad_agua
+                    )}
+                  />
+
+                  <SmallFact
+                    icon={Zap}
+                    label="Electricidad"
+                    value={formatFactibilidad(
+                      propiedad.factibilidad_luz
+                    )}
+                  />
+
                 </div>
               )}
-            </>
-          ) : (
-            <div className="no-image">
-              <Images size={44} />
-              <span>Sin fotografías</span>
+
+              {whatsappUrl && (
+                <a
+                  href={whatsappUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="whatsapp-button"
+                >
+                  <MessageCircle size={20} />
+                  Consultar por WhatsApp
+                </a>
+              )}
+
+              <div className="secondary-actions">
+
+                {propiedad.telefono_contacto && (
+                  <a
+                    href={`tel:${propiedad.telefono_contacto}`}
+                  >
+                    <Phone size={17} />
+                    Llamar
+                  </a>
+                )}
+
+                {propiedad.email_contacto && (
+                  <a
+                    href={`mailto:${propiedad.email_contacto}?subject=${encodeURIComponent(
+                      `Consulta por ${propiedad.titulo}`
+                    )}`}
+                  >
+                    <Mail size={17} />
+                    Email
+                  </a>
+                )}
+
+              </div>
+
+              <div className="published-by">
+                <span>
+                  Publicado por
+                </span>
+
+                <strong>
+                  Hecta
+                </strong>
+              </div>
+
             </div>
-          )}
+
+          </aside>
+
         </section>
 
-        {/* CONTENIDO */}
+        {/* CUERPO */}
 
-        <div className="content-layout">
+        <div className="body-layout">
 
           <div className="main-content">
 
-            {/* RESUMEN */}
+            {/* INFORMACIÓN */}
 
-            <section className="info-card">
-              <h2>Información principal</h2>
+            <section className="content-section">
 
-              <div className="quick-features">
-
-                {superficieTotal && (
-                  <QuickFeature
-                    icon={Ruler}
-                    label="Superficie"
-                    value={superficieTotal}
-                  />
-                )}
-
-                {propiedad.dormitorios != null && (
-                  <QuickFeature
-                    icon={BedDouble}
-                    label="Dormitorios"
-                    value={propiedad.dormitorios}
-                  />
-                )}
-
-                {propiedad.banos != null && (
-                  <QuickFeature
-                    icon={Bath}
-                    label="Baños"
-                    value={propiedad.banos}
-                  />
-                )}
-
-                {propiedad.estacionamientos != null && (
-                  <QuickFeature
-                    icon={Car}
-                    label="Estacionamientos"
-                    value={propiedad.estacionamientos}
-                  />
-                )}
-
-              </div>
-            </section>
-
-            {/* DESCRIPCIÓN */}
-
-            <section className="info-card">
-              <h2>Descripción</h2>
-
-              <p className="description">
-                {propiedad.descripcion ||
-                  'Sin descripción disponible.'}
-              </p>
-            </section>
-
-            {/* CARACTERÍSTICAS */}
-
-            <section className="info-card">
-              <h2>Características</h2>
+              <h2>
+                Información de la propiedad
+              </h2>
 
               <div className="features-grid">
 
                 {propiedad.tipo && (
                   <Feature
-                    label="Tipo de propiedad"
+                    label="Tipo"
                     value={propiedad.tipo}
                   />
                 )}
@@ -382,10 +449,13 @@ export default function PropiedadPage() {
                   />
                 )}
 
-                {propiedad.dormitorios != null && (
+                {propiedad.dormitorios !=
+                  null && (
                   <Feature
                     label="Dormitorios"
-                    value={propiedad.dormitorios}
+                    value={
+                      propiedad.dormitorios
+                    }
                   />
                 )}
 
@@ -396,7 +466,8 @@ export default function PropiedadPage() {
                   />
                 )}
 
-                {propiedad.estacionamientos != null && (
+                {propiedad.estacionamientos !=
+                  null && (
                   <Feature
                     label="Estacionamientos"
                     value={
@@ -412,55 +483,64 @@ export default function PropiedadPage() {
                   />
                 )}
 
-              </div>
-
-              <div className="services-grid">
-
-                <Service
-                  icon={Droplets}
-                  label="Agua"
+                <Feature
+                  label="Factibilidad de agua"
                   value={formatFactibilidad(
                     propiedad.factibilidad_agua
                   )}
                 />
 
-                <Service
-                  icon={Zap}
-                  label="Electricidad"
+                <Feature
+                  label="Factibilidad eléctrica"
                   value={formatFactibilidad(
                     propiedad.factibilidad_luz
                   )}
                 />
 
-                {propiedad.bodegas != null && (
-                  <Service
-                    icon={Warehouse}
-                    label="Bodega"
-                    value={
-                      propiedad.bodegas > 0
-                        ? 'Sí'
-                        : 'No'
-                    }
-                  />
-                )}
-
               </div>
+
             </section>
 
-            {/* MAPA */}
+            {/* DESCRIPCIÓN */}
+
+            <section className="content-section">
+
+              <h2>
+                Descripción
+              </h2>
+
+              <p className="description">
+                {propiedad.descripcion ||
+                  'Sin descripción disponible.'}
+              </p>
+
+            </section>
+
+            {/* UBICACIÓN */}
 
             {(tieneCoordenadas ||
               propiedad.direccion) && (
-              <section className="info-card">
-                <div className="section-title-row">
-                  <div>
-                    <h2>Ubicación</h2>
+              <section className="content-section">
 
-                    {propiedad.direccion && (
-                      <p className="address">
-                        {propiedad.direccion}
-                      </p>
-                    )}
+                <div className="section-title-row">
+
+                  <div>
+
+                    <h2>
+                      Ubicación
+                    </h2>
+
+                    <div className="location-address">
+
+                      <MapPin size={18} />
+
+                      <span>
+                        {propiedad.direccion ||
+                          ubicacion}
+                      </span>
+
+                    </div>
+
                   </div>
 
                   {googleMapsUrl && (
@@ -471,42 +551,53 @@ export default function PropiedadPage() {
                       className="map-link"
                     >
                       Abrir en Google Maps
-                      <ExternalLink size={16} />
+                      <ExternalLink size={15} />
                     </a>
                   )}
+
                 </div>
 
                 {mapaUrl && (
                   <div className="map-wrapper">
+
                     <iframe
                       src={mapaUrl}
                       title={`Mapa de ${propiedad.titulo}`}
                       loading="lazy"
                       referrerPolicy="no-referrer-when-downgrade"
                     />
+
                   </div>
                 )}
+
               </section>
             )}
 
             {/* VIDEO */}
 
             {propiedad.video_youtube && (
-              <section className="info-card">
-                <h2>Video</h2>
+              <section className="content-section">
+
+                <h2>
+                  Video
+                </h2>
 
                 {youtubeEmbed ? (
                   <div className="video-wrapper">
+
                     <iframe
                       src={youtubeEmbed}
                       title={`Video de ${propiedad.titulo}`}
                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                       allowFullScreen
                     />
+
                   </div>
                 ) : (
                   <a
-                    href={propiedad.video_youtube}
+                    href={
+                      propiedad.video_youtube
+                    }
                     target="_blank"
                     rel="noreferrer"
                     className="youtube-link"
@@ -515,162 +606,273 @@ export default function PropiedadPage() {
                     Ver video en YouTube
                   </a>
                 )}
+
               </section>
             )}
 
           </div>
 
-          {/* CONTACTO */}
+          {/* CONTACTO INFERIOR */}
 
-          <aside className="sidebar">
-            <div className="contact-card">
+          <aside className="contact-side">
+
+            <div className="contact-box">
 
               <span className="contact-eyebrow">
                 CONTACTA A HECTA
               </span>
 
-              <h2>
+              <h3>
                 ¿Te interesa esta propiedad?
-              </h2>
+              </h3>
 
               <p>
-                Solicita más información o coordina
-                una visita con nuestro equipo.
+                Solicita más información o
+                coordina una visita.
               </p>
 
-              <div className="contact-price">
-                <span>Precio</span>
-                <strong>{precio}</strong>
-              </div>
+              {propiedad.nombre_contacto && (
+                <div className="contact-person">
+
+                  <span>
+                    Contacto
+                  </span>
+
+                  <strong>
+                    {
+                      propiedad.nombre_contacto
+                    }
+                  </strong>
+
+                </div>
+              )}
 
               {whatsappUrl && (
                 <a
                   href={whatsappUrl}
                   target="_blank"
                   rel="noreferrer"
-                  className="whatsapp-button"
+                  className="contact-whatsapp"
                 >
-                  <MessageCircle size={20} />
-                  Consultar por WhatsApp
+                  <MessageCircle size={19} />
+                  WhatsApp
                 </a>
-              )}
-
-              {propiedad.telefono_contacto && (
-                <a
-                  href={`tel:${propiedad.telefono_contacto}`}
-                  className="secondary-button"
-                >
-                  <Phone size={19} />
-                  Llamar
-                </a>
-              )}
-
-              {propiedad.email_contacto && (
-                <a
-                  href={`mailto:${propiedad.email_contacto}?subject=${encodeURIComponent(
-                    `Consulta por ${propiedad.titulo}`
-                  )}`}
-                  className="secondary-button"
-                >
-                  <Mail size={19} />
-                  Enviar correo
-                </a>
-              )}
-
-              {propiedad.nombre_contacto && (
-                <div className="contact-person">
-                  <span>Contacto</span>
-                  <strong>
-                    {propiedad.nombre_contacto}
-                  </strong>
-                </div>
               )}
 
             </div>
+
           </aside>
 
         </div>
+
       </div>
 
       {/* LIGHTBOX */}
 
-      {galeriaAbierta && imagenes.length > 0 && (
-        <div
-          className="lightbox"
-          role="dialog"
-          aria-modal="true"
-        >
-          <button
-            type="button"
-            className="close-lightbox"
-            onClick={() =>
-              setGaleriaAbierta(false)
-            }
-            aria-label="Cerrar galería"
+      {galeriaAbierta &&
+        imagenes.length > 0 && (
+          <div
+            className="lightbox"
+            role="dialog"
+            aria-modal="true"
           >
-            <X size={30} />
-          </button>
 
-          {imagenes.length > 1 && (
             <button
               type="button"
-              className="gallery-arrow gallery-left"
-              onClick={fotoAnterior}
-              aria-label="Foto anterior"
+              className="close-lightbox"
+              onClick={() =>
+                setGaleriaAbierta(false)
+              }
+              aria-label="Cerrar galería"
             >
-              <ChevronLeft size={38} />
+              <X size={30} />
             </button>
-          )}
 
-          <div className="lightbox-content">
-            <img
-              src={imagenes[fotoActiva]}
-              alt={`${propiedad.titulo} ${
-                fotoActiva + 1
-              }`}
-            />
+            {imagenes.length > 1 && (
+              <button
+                type="button"
+                className="gallery-arrow gallery-left"
+                onClick={fotoAnterior}
+                aria-label="Foto anterior"
+              >
+                <ChevronLeft size={38} />
+              </button>
+            )}
 
-            <span>
-              {fotoActiva + 1} / {imagenes.length}
-            </span>
+            <div className="lightbox-content">
+
+              <img
+                src={
+                  imagenes[fotoActiva]
+                }
+                alt={`${propiedad.titulo} ${
+                  fotoActiva + 1
+                }`}
+              />
+
+              <span>
+                {fotoActiva + 1} /{' '}
+                {imagenes.length}
+              </span>
+
+            </div>
+
+            {imagenes.length > 1 && (
+              <button
+                type="button"
+                className="gallery-arrow gallery-right"
+                onClick={fotoSiguiente}
+                aria-label="Foto siguiente"
+              >
+                <ChevronRight size={38} />
+              </button>
+            )}
+
           </div>
-
-          {imagenes.length > 1 && (
-            <button
-              type="button"
-              className="gallery-arrow gallery-right"
-              onClick={fotoSiguiente}
-              aria-label="Foto siguiente"
-            >
-              <ChevronRight size={38} />
-            </button>
-          )}
-        </div>
-      )}
+        )}
 
       <Styles />
+
     </main>
   );
 }
 
-function QuickFeature({
+function Gallery({
+  imagenes,
+  titulo,
+  onOpen,
+}) {
+  if (imagenes.length === 0) {
+    return (
+      <div className="gallery-empty">
+        <Images size={42} />
+        <span>Sin fotografías</span>
+      </div>
+    );
+  }
+
+  const miniaturas =
+    imagenes.slice(1, 5);
+
+  return (
+    <div className="gallery">
+
+      {/* MINIATURAS */}
+
+      {imagenes.length > 1 && (
+        <div className="thumb-column">
+
+          {miniaturas.map(
+            (imagen, index) => (
+              <button
+                key={`${imagen}-${index}`}
+                type="button"
+                className="thumbnail"
+                onClick={() =>
+                  onOpen(index + 1)
+                }
+              >
+                <img
+                  src={imagen}
+                  alt={`${titulo} ${
+                    index + 2
+                  }`}
+                />
+
+                {index === 3 &&
+                  imagenes.length > 5 && (
+                    <span className="thumb-more">
+                      +{imagenes.length - 5}
+                    </span>
+                  )}
+
+              </button>
+            )
+          )}
+
+        </div>
+      )}
+
+      {/* FOTO PRINCIPAL */}
+
+      <div
+        className="main-image"
+        onClick={() => onOpen(0)}
+      >
+
+        <img
+          src={imagenes[0]}
+          alt={titulo}
+        />
+
+        <button
+          type="button"
+          className="all-photos"
+          onClick={(event) => {
+            event.stopPropagation();
+            onOpen(0);
+          }}
+        >
+          <Images size={17} />
+
+          Ver {imagenes.length}{' '}
+          {imagenes.length === 1
+            ? 'foto'
+            : 'fotos'}
+        </button>
+
+      </div>
+
+    </div>
+  );
+}
+
+function SummaryFeature({
+  icon: Icon,
+  value,
+  label,
+}) {
+  return (
+    <div className="summary-feature">
+
+      <Icon size={20} />
+
+      <div>
+        <strong>
+          {value}
+        </strong>
+
+        <span>
+          {label}
+        </span>
+      </div>
+
+    </div>
+  );
+}
+
+function SmallFact({
   icon: Icon,
   label,
   value,
 }) {
   return (
-    <div className="quick-feature">
-      <Icon size={25} />
+    <div className="small-fact">
 
-      <div>
-        <strong>{value}</strong>
-        <span>{label}</span>
-      </div>
+      <Icon size={17} />
+
+      <span>
+        {label}: <strong>{value}</strong>
+      </span>
+
     </div>
   );
 }
 
-function Feature({ label, value }) {
+function Feature({
+  label,
+  value,
+}) {
   if (
     value === null ||
     value === undefined ||
@@ -681,32 +883,23 @@ function Feature({ label, value }) {
 
   return (
     <div className="feature">
-      <span>{label}</span>
-      <strong>{value}</strong>
+
+      <span>
+        {label}
+      </span>
+
+      <strong>
+        {value}
+      </strong>
+
     </div>
   );
 }
 
-function Service({
-  icon: Icon,
-  label,
-  value,
-}) {
-  return (
-    <div className="service">
-      <div className="service-icon">
-        <Icon size={23} />
-      </div>
-
-      <div>
-        <span>{label}</span>
-        <strong>{value}</strong>
-      </div>
-    </div>
-  );
-}
-
-function formatearPrecio(precio, moneda) {
+function formatearPrecio(
+  precio,
+  moneda
+) {
   if (
     precio === null ||
     precio === undefined
@@ -715,7 +908,9 @@ function formatearPrecio(precio, moneda) {
   }
 
   const numero =
-    Number(precio).toLocaleString('es-CL');
+    Number(precio).toLocaleString(
+      'es-CL'
+    );
 
   if (moneda === 'UF') {
     return `${numero} UF`;
@@ -736,9 +931,12 @@ function formatearSuperficie(
   }
 
   const numero =
-    Number(superficie).toLocaleString('es-CL');
+    Number(
+      superficie
+    ).toLocaleString('es-CL');
 
-  let unidadFinal = unidad || 'm2';
+  let unidadFinal =
+    unidad || 'm2';
 
   if (unidadFinal === 'm2') {
     unidadFinal = 'm²';
@@ -749,21 +947,24 @@ function formatearSuperficie(
 
 function formatFactibilidad(valor) {
   if (valor === 'si') {
-    return 'Disponible';
+    return 'Sí';
   }
 
   if (valor === 'no') {
-    return 'No disponible';
+    return 'No';
   }
 
   return 'Por confirmar';
 }
 
 function getYoutubeEmbedUrl(url) {
-  if (!url) return null;
+  if (!url) {
+    return null;
+  }
 
   try {
-    const parsedUrl = new URL(url);
+    const parsedUrl =
+      new URL(url);
 
     if (
       parsedUrl.hostname.includes(
@@ -771,7 +972,9 @@ function getYoutubeEmbedUrl(url) {
       )
     ) {
       const videoId =
-        parsedUrl.searchParams.get('v');
+        parsedUrl.searchParams.get(
+          'v'
+        );
 
       if (videoId) {
         return `https://www.youtube.com/embed/${videoId}`;
@@ -787,10 +990,14 @@ function getYoutubeEmbedUrl(url) {
     }
 
     if (
-      parsedUrl.hostname === 'youtu.be'
+      parsedUrl.hostname ===
+      'youtu.be'
     ) {
       const videoId =
-        parsedUrl.pathname.replace('/', '');
+        parsedUrl.pathname.replace(
+          '/',
+          ''
+        );
 
       if (videoId) {
         return `https://www.youtube.com/embed/${videoId}`;
@@ -806,15 +1013,33 @@ function getYoutubeEmbedUrl(url) {
 function Styles() {
   return (
     <style jsx global>{`
+
       * {
         box-sizing: border-box;
       }
 
+      body {
+        margin: 0;
+      }
+
+      button,
+      input {
+        font: inherit;
+      }
+
       .page {
         min-height: 100vh;
+        padding: 24px 20px 80px;
         background: #f6f4ee;
         color: #102335;
-        padding: 32px 22px 80px;
+        font-family:
+          Inter,
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          'Segoe UI',
+          sans-serif;
       }
 
       .center-page {
@@ -824,252 +1049,387 @@ function Styles() {
 
       .container {
         width: 100%;
-        max-width: 1380px;
+        max-width: 1280px;
         margin: 0 auto;
+      }
+
+      /* NAVEGACIÓN */
+
+      .breadcrumb-row {
+        min-height: 46px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+        margin-bottom: 18px;
       }
 
       .back {
         display: inline-flex;
         align-items: center;
         gap: 7px;
-        margin-bottom: 28px;
         color: #0b5137;
+        font-size: 14px;
         font-weight: 800;
         text-decoration: none;
       }
 
-      .property-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-end;
-        gap: 30px;
-        margin-bottom: 30px;
+      .breadcrumb {
+        color: #7a837e;
+        font-size: 13px;
       }
 
-      .header-copy {
-        max-width: 900px;
+      /* TOP */
+
+      .top-layout {
+        display: grid;
+        grid-template-columns:
+          minmax(0, 1.8fr)
+          minmax(330px, 0.72fr);
+        gap: 22px;
+        align-items: start;
+        margin-bottom: 32px;
       }
 
-      .operation {
-        display: inline-block;
-        color: #aa8438;
-        font-size: 15px;
-        font-weight: 900;
-        letter-spacing: 0.1em;
-        text-transform: uppercase;
-        margin-bottom: 12px;
-      }
-
-      .property-header h1 {
-        margin: 0 0 12px;
-        color: #0a412d;
-        font-size: clamp(
-          38px,
-          5vw,
-          70px
-        );
-        line-height: 1.02;
-        letter-spacing: -0.035em;
-      }
-
-      .location {
-        display: flex;
-        align-items: center;
-        gap: 7px;
-        color: #69746f;
-        font-size: 19px;
-      }
-
-      .price {
-        color: #0b5137;
-        font-size: clamp(
-          29px,
-          3vw,
-          43px
-        );
-        font-weight: 900;
-        white-space: nowrap;
-      }
+      /* GALERÍA */
 
       .gallery {
+        height: 470px;
         display: grid;
-        grid-template-columns: minmax(
-            0,
-            2fr
-          ) minmax(300px, 0.75fr);
+        grid-template-columns:
+          105px
+          minmax(0, 1fr);
         gap: 10px;
-        height: 580px;
-        margin-bottom: 34px;
-        overflow: hidden;
-        border-radius: 22px;
       }
 
-      .main-photo {
+      .thumb-column {
+        min-height: 0;
+        display: grid;
+        grid-template-rows:
+          repeat(4, 1fr);
+        gap: 9px;
+      }
+
+      .thumbnail {
         position: relative;
-        overflow: hidden;
-        cursor: pointer;
-        background: #e5e2d9;
-      }
-
-      .main-photo > img {
         width: 100%;
-        height: 100%;
-        object-fit: cover;
-        display: block;
-        transition: transform 0.25s ease;
-      }
-
-      .main-photo:hover > img {
-        transform: scale(1.015);
-      }
-
-      .photos-button {
-        position: absolute;
-        right: 18px;
-        bottom: 18px;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        border: 0;
+        min-height: 0;
+        overflow: hidden;
+        border: 2px solid transparent;
         border-radius: 10px;
-        padding: 12px 16px;
-        background: rgba(
-          255,
-          255,
-          255,
-          0.94
-        );
-        color: #102335;
-        font-weight: 800;
-        cursor: pointer;
-        box-shadow: 0 4px 20px
-          rgba(0, 0, 0, 0.12);
-      }
-
-      .side-photos {
-        display: grid;
-        grid-template-columns: 1fr;
-        grid-template-rows: repeat(
-          4,
-          1fr
-        );
-        gap: 10px;
-        min-height: 0;
-      }
-
-      .mini-photo {
-        position: relative;
-        width: 100%;
-        min-height: 0;
-        border: 0;
         padding: 0;
-        overflow: hidden;
+        background: #e4e2db;
         cursor: pointer;
-        background: #e5e2d9;
       }
 
-      .mini-photo img {
+      .thumbnail:hover {
+        border-color: #0b5137;
+      }
+
+      .thumbnail img {
         width: 100%;
         height: 100%;
-        object-fit: cover;
         display: block;
+        object-fit: cover;
       }
 
-      .more-overlay {
+      .thumb-more {
         position: absolute;
         inset: 0;
         display: grid;
         place-items: center;
         background: rgba(
           5,
-          35,
-          26,
-          0.58
+          43,
+          30,
+          0.6
         );
         color: white;
-        font-size: 28px;
+        font-size: 22px;
         font-weight: 900;
       }
 
-      .no-image {
-        grid-column: 1 / -1;
+      .main-image {
+        position: relative;
+        min-width: 0;
+        height: 100%;
+        overflow: hidden;
+        border-radius: 15px;
+        background: #e5e2da;
+        cursor: pointer;
+      }
+
+      .main-image > img {
+        width: 100%;
+        height: 100%;
+        display: block;
+        object-fit: cover;
+        transition: transform 0.2s ease;
+      }
+
+      .main-image:hover > img {
+        transform: scale(1.012);
+      }
+
+      .all-photos {
+        position: absolute;
+        right: 14px;
+        bottom: 14px;
+        min-height: 41px;
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        padding: 0 13px;
+        border: 1px solid
+          rgba(0, 0, 0, 0.08);
+        border-radius: 8px;
+        background: rgba(
+          255,
+          255,
+          255,
+          0.96
+        );
+        color: #17332a;
+        font-size: 13px;
+        font-weight: 800;
+        cursor: pointer;
+        box-shadow:
+          0 4px 14px
+          rgba(
+            0,
+            0,
+            0,
+            0.12
+          );
+      }
+
+      .gallery-empty {
+        height: 470px;
         display: grid;
         place-items: center;
         align-content: center;
-        gap: 12px;
-        min-height: 400px;
-        background: #e9e6dd;
-        color: #68736d;
+        gap: 10px;
+        border-radius: 15px;
+        background: #e8e5dd;
+        color: #727c77;
       }
 
-      .content-layout {
+      /* RESUMEN DERECHO */
+
+      .summary-column {
+        min-width: 0;
+      }
+
+      .summary-card {
+        padding: 24px;
+        border: 1px solid #dfdbd1;
+        border-radius: 16px;
+        background: white;
+        box-shadow:
+          0 7px 25px
+          rgba(
+            16,
+            35,
+            53,
+            0.045
+          );
+      }
+
+      .property-type {
+        color: #7a837e;
+        font-size: 13px;
+      }
+
+      .summary-card h1 {
+        margin:
+          9px
+          0
+          10px;
+        color: #112820;
+        font-size: 30px;
+        line-height: 1.12;
+        letter-spacing:
+          -0.025em;
+      }
+
+      .summary-location {
+        display: flex;
+        align-items: flex-start;
+        gap: 6px;
+        color: #69736e;
+        font-size: 14px;
+        line-height: 1.45;
+      }
+
+      .summary-location svg {
+        flex: 0 0 auto;
+        margin-top: 1px;
+      }
+
+      .summary-price {
+        margin-top: 22px;
+        color: #0b5137;
+        font-size: 34px;
+        line-height: 1;
+        font-weight: 900;
+        letter-spacing:
+          -0.025em;
+      }
+
+      .summary-divider {
+        height: 1px;
+        margin: 20px 0;
+        background: #e5e1d8;
+      }
+
+      .summary-features {
         display: grid;
         grid-template-columns:
-          minmax(0, 2fr)
-          minmax(320px, 0.8fr);
-        gap: 30px;
+          repeat(2, 1fr);
+        gap: 10px;
+      }
+
+      .summary-feature {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        min-width: 0;
+        padding: 11px;
+        border-radius: 10px;
+        background: #f7f6f2;
+        color: #0b5137;
+      }
+
+      .summary-feature div {
+        min-width: 0;
+        display: grid;
+        gap: 2px;
+      }
+
+      .summary-feature strong {
+        overflow: hidden;
+        color: #173129;
+        font-size: 14px;
+        text-overflow: ellipsis;
+      }
+
+      .summary-feature span {
+        color: #78817c;
+        font-size: 11px;
+      }
+
+      .factibilities {
+        display: grid;
+        gap: 8px;
+        margin-top: 15px;
+      }
+
+      .small-fact {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: #5f6b65;
+        font-size: 13px;
+      }
+
+      .small-fact svg {
+        color: #0b5137;
+      }
+
+      .small-fact strong {
+        color: #173129;
+      }
+
+      .whatsapp-button {
+        min-height: 52px;
+        margin-top: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 9px;
+        border-radius: 9px;
+        background: #0b5137;
+        color: white;
+        font-size: 15px;
+        font-weight: 850;
+        text-decoration: none;
+      }
+
+      .secondary-actions {
+        display: grid;
+        grid-template-columns:
+          repeat(2, 1fr);
+        gap: 8px;
+        margin-top: 9px;
+      }
+
+      .secondary-actions a {
+        min-height: 42px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+        border: 1px solid #dbd8d0;
+        border-radius: 8px;
+        background: white;
+        color: #244238;
+        font-size: 12px;
+        font-weight: 750;
+        text-decoration: none;
+      }
+
+      .published-by {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        margin-top: 18px;
+        padding-top: 14px;
+        border-top: 1px solid #ebe8e1;
+        color: #7a837e;
+        font-size: 12px;
+      }
+
+      .published-by strong {
+        color: #0b5137;
+      }
+
+      /* CUERPO */
+
+      .body-layout {
+        display: grid;
+        grid-template-columns:
+          minmax(0, 1fr)
+          285px;
+        gap: 28px;
         align-items: start;
       }
 
       .main-content {
-        display: grid;
-        gap: 22px;
+        min-width: 0;
       }
 
-      .info-card {
-        background: white;
-        border: 1px solid #dfdbd0;
-        border-radius: 20px;
-        padding: 30px;
+      .content-section {
+        padding:
+          27px
+          0
+          30px;
+        border-top: 1px solid #dedbd2;
       }
 
-      .info-card h2 {
-        margin: 0 0 22px;
-        color: #0c402e;
+      .content-section:first-child {
+        border-top: 0;
+        padding-top: 0;
+      }
+
+      .content-section h2 {
+        margin:
+          0
+          0
+          20px;
+        color: #16372c;
         font-size: 25px;
-      }
-
-      .quick-features {
-        display: grid;
-        grid-template-columns:
-          repeat(
-            auto-fit,
-            minmax(180px, 1fr)
-          );
-        gap: 15px;
-      }
-
-      .quick-feature {
-        display: flex;
-        align-items: center;
-        gap: 13px;
-        padding: 17px;
-        background: #f7f5ef;
-        border-radius: 14px;
-        color: #0b5137;
-      }
-
-      .quick-feature div {
-        display: grid;
-        gap: 3px;
-      }
-
-      .quick-feature strong {
-        color: #102335;
-        font-size: 17px;
-      }
-
-      .quick-feature span {
-        color: #707973;
-        font-size: 13px;
-      }
-
-      .description {
-        margin: 0;
-        color: #47534d;
-        line-height: 1.8;
-        font-size: 17px;
-        white-space: pre-line;
+        letter-spacing:
+          -0.015em;
       }
 
       .features-grid {
@@ -1077,99 +1437,83 @@ function Styles() {
         grid-template-columns:
           repeat(
             auto-fit,
-            minmax(190px, 1fr)
+            minmax(
+              180px,
+              1fr
+            )
           );
-        gap: 12px;
+        gap: 1px;
+        overflow: hidden;
+        border: 1px solid #dfdcd3;
+        border-radius: 12px;
+        background: #dfdcd3;
       }
 
       .feature {
+        min-height: 83px;
         display: grid;
+        align-content: center;
         gap: 6px;
-        padding: 16px;
-        border-radius: 12px;
-        background: #f7f5ef;
+        padding: 15px;
+        background: white;
       }
 
       .feature span {
-        color: #747d77;
-        font-size: 13px;
+        color: #77807b;
+        font-size: 12px;
       }
 
       .feature strong {
-        color: #102335;
+        color: #16372c;
+        font-size: 15px;
       }
 
-      .services-grid {
-        display: grid;
-        grid-template-columns:
-          repeat(
-            auto-fit,
-            minmax(180px, 1fr)
-          );
-        gap: 12px;
-        margin-top: 18px;
-      }
-
-      .service {
-        display: flex;
-        align-items: center;
-        gap: 11px;
-        border: 1px solid #e4e0d5;
-        border-radius: 13px;
-        padding: 14px;
-      }
-
-      .service-icon {
-        width: 42px;
-        height: 42px;
-        border-radius: 50%;
-        display: grid;
-        place-items: center;
-        background: #f3efe4;
-        color: #0b5137;
-      }
-
-      .service > div:last-child {
-        display: grid;
-        gap: 3px;
-      }
-
-      .service span {
-        color: #747d77;
-        font-size: 12px;
+      .description {
+        max-width: 850px;
+        margin: 0;
+        color: #48554f;
+        font-size: 16px;
+        line-height: 1.8;
+        white-space: pre-line;
       }
 
       .section-title-row {
         display: flex;
+        justify-content:
+          space-between;
         align-items: flex-start;
-        justify-content: space-between;
         gap: 20px;
-        margin-bottom: 18px;
+        margin-bottom: 17px;
       }
 
       .section-title-row h2 {
-        margin-bottom: 5px;
+        margin-bottom: 9px;
       }
 
-      .address {
-        margin: 0;
-        color: #67726d;
+      .location-address {
+        display: flex;
+        align-items: flex-start;
+        gap: 7px;
+        color: #626e68;
+        font-size: 14px;
       }
 
       .map-link {
-        display: inline-flex;
+        flex: 0 0 auto;
+        display: flex;
         align-items: center;
-        gap: 7px;
+        gap: 6px;
         color: #0b5137;
+        font-size: 13px;
         font-weight: 800;
         text-decoration: none;
-        white-space: nowrap;
       }
 
       .map-wrapper {
-        height: 390px;
+        width: 100%;
+        height: 360px;
         overflow: hidden;
-        border-radius: 15px;
+        border-radius: 12px;
       }
 
       .map-wrapper iframe {
@@ -1181,7 +1525,7 @@ function Styles() {
       .video-wrapper {
         position: relative;
         overflow: hidden;
-        border-radius: 15px;
+        border-radius: 12px;
         padding-top: 56.25%;
       }
 
@@ -1196,113 +1540,89 @@ function Styles() {
       .youtube-link {
         display: inline-flex;
         align-items: center;
-        gap: 9px;
+        gap: 8px;
         color: #0b5137;
         font-weight: 800;
         text-decoration: none;
       }
 
-      .sidebar {
+      /* CONTACTO INFERIOR */
+
+      .contact-side {
         position: sticky;
-        top: 24px;
+        top: 20px;
       }
 
-      .contact-card {
-        display: grid;
-        gap: 15px;
-        padding: 28px;
-        border-radius: 22px;
-        background: #084c35;
-        color: white;
-        box-shadow: 0 15px 40px
-          rgba(4, 55, 38, 0.15);
+      .contact-box {
+        padding: 22px;
+        border: 1px solid #dedbd2;
+        border-radius: 14px;
+        background: white;
       }
 
       .contact-eyebrow {
-        color: #e0bb68;
-        font-size: 12px;
+        color: #b08839;
+        font-size: 10px;
         font-weight: 900;
-        letter-spacing: 0.11em;
+        letter-spacing:
+          0.12em;
       }
 
-      .contact-card h2 {
-        margin: 0;
-        font-size: 27px;
-        line-height: 1.15;
+      .contact-box h3 {
+        margin:
+          8px
+          0
+          8px;
+        color: #16372c;
+        font-size: 21px;
+        line-height: 1.2;
       }
 
-      .contact-card > p {
-        margin: 0 0 4px;
-        color: rgba(
-          255,
-          255,
-          255,
-          0.82
-        );
-        line-height: 1.55;
-      }
-
-      .contact-price {
-        display: grid;
-        gap: 4px;
-        padding: 15px 0 18px;
-        border-bottom: 1px solid
-          rgba(255, 255, 255, 0.16);
-      }
-
-      .contact-price span {
-        font-size: 12px;
-        color: rgba(
-          255,
-          255,
-          255,
-          0.7
-        );
-      }
-
-      .contact-price strong {
-        font-size: 25px;
-      }
-
-      .whatsapp-button,
-      .secondary-button {
-        min-height: 50px;
-        border-radius: 11px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 9px;
-        padding: 10px 14px;
-        font-weight: 850;
-        text-decoration: none;
-      }
-
-      .whatsapp-button {
-        background: white;
-        color: #084c35;
-      }
-
-      .secondary-button {
-        border: 1px solid
-          rgba(255, 255, 255, 0.35);
-        color: white;
+      .contact-box > p {
+        margin:
+          0
+          0
+          17px;
+        color: #6c7671;
+        font-size: 13px;
+        line-height: 1.5;
       }
 
       .contact-person {
         display: grid;
         gap: 3px;
-        padding-top: 8px;
+        margin-bottom: 15px;
+        padding:
+          12px
+          0;
+        border-top: 1px solid #ece9e2;
       }
 
       .contact-person span {
-        font-size: 12px;
-        color: rgba(
-          255,
-          255,
-          255,
-          0.67
-        );
+        color: #7e8782;
+        font-size: 11px;
       }
+
+      .contact-person strong {
+        color: #18372c;
+        font-size: 14px;
+      }
+
+      .contact-whatsapp {
+        min-height: 45px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        border-radius: 8px;
+        background: #0b5137;
+        color: white;
+        font-size: 13px;
+        font-weight: 850;
+        text-decoration: none;
+      }
+
+      /* LIGHTBOX */
 
       .lightbox {
         position: fixed;
@@ -1310,21 +1630,21 @@ function Styles() {
         z-index: 9999;
         display: grid;
         place-items: center;
+        padding: 35px 80px;
         background: rgba(
           4,
           15,
           11,
-          0.95
+          0.96
         );
-        padding: 35px 80px;
       }
 
       .lightbox-content {
-        max-width: 1250px;
         width: 100%;
+        max-width: 1250px;
         display: grid;
         justify-items: center;
-        gap: 13px;
+        gap: 12px;
       }
 
       .lightbox-content img {
@@ -1341,15 +1661,15 @@ function Styles() {
       .close-lightbox,
       .gallery-arrow {
         border: 0;
-        color: white;
         background: transparent;
+        color: white;
         cursor: pointer;
       }
 
       .close-lightbox {
         position: absolute;
-        right: 25px;
-        top: 23px;
+        top: 20px;
+        right: 24px;
       }
 
       .gallery-arrow {
@@ -1368,71 +1688,123 @@ function Styles() {
 
       .empty-card {
         padding: 40px;
-        background: white;
         border-radius: 18px;
+        background: white;
       }
 
+      /* TABLET */
+
       @media (
-        max-width: 980px
+        max-width: 1000px
       ) {
-        .property-header {
-          align-items: flex-start;
-          flex-direction: column;
+
+        .top-layout {
+          grid-template-columns: 1fr;
+        }
+
+        .summary-card h1 {
+          font-size: 32px;
+        }
+
+        .summary-column {
+          order: -1;
         }
 
         .gallery {
-          grid-template-columns: 1fr;
-          height: auto;
+          height: 500px;
         }
 
-        .main-photo {
-          height: 450px;
-          border-radius: 20px;
-        }
-
-        .side-photos {
-          grid-template-columns:
-            repeat(4, 1fr);
-          grid-template-rows: 120px;
-        }
-
-        .content-layout {
+        .body-layout {
           grid-template-columns: 1fr;
         }
 
-        .sidebar {
+        .contact-side {
           position: static;
         }
+
       }
 
+      /* MOBILE */
+
       @media (
-        max-width: 620px
+        max-width: 650px
       ) {
+
         .page {
-          padding: 20px 14px 60px;
+          padding:
+            17px
+            13px
+            60px;
         }
 
-        .property-header h1 {
-          font-size: 39px;
+        .breadcrumb {
+          display: none;
         }
 
-        .price {
+        .top-layout {
+          gap: 14px;
+        }
+
+        .summary-column {
+          order: 0;
+        }
+
+        .visual-column {
+          order: -1;
+        }
+
+        .gallery {
+          height: auto;
+          display: block;
+        }
+
+        .thumb-column {
+          display: none;
+        }
+
+        .main-image {
+          height: 310px;
+          border-radius: 12px;
+        }
+
+        .gallery-empty {
+          height: 310px;
+        }
+
+        .summary-card {
+          padding: 20px;
+        }
+
+        .summary-card h1 {
+          font-size: 27px;
+        }
+
+        .summary-price {
           font-size: 29px;
         }
 
-        .main-photo {
-          height: 320px;
-        }
-
-        .side-photos {
+        .summary-features {
           grid-template-columns:
             repeat(2, 1fr);
-          grid-template-rows:
-            repeat(2, 100px);
         }
 
-        .info-card {
-          padding: 21px;
+        .body-layout {
+          display: block;
+        }
+
+        .content-section {
+          padding:
+            24px
+            0;
+        }
+
+        .content-section h2 {
+          font-size: 22px;
+        }
+
+        .features-grid {
+          grid-template-columns:
+            repeat(2, 1fr);
         }
 
         .section-title-row {
@@ -1440,21 +1812,30 @@ function Styles() {
         }
 
         .map-wrapper {
-          height: 300px;
+          height: 290px;
+        }
+
+        .contact-side {
+          margin-top: 20px;
         }
 
         .lightbox {
-          padding: 60px 12px 30px;
+          padding:
+            60px
+            10px
+            25px;
         }
 
         .gallery-left {
-          left: 2px;
+          left: 0;
         }
 
         .gallery-right {
-          right: 2px;
+          right: 0;
         }
+
       }
+
     `}</style>
   );
 }
