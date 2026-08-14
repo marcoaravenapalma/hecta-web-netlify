@@ -53,6 +53,7 @@ export default function PublicarPropiedad() {
   const [mensajeTipo, setMensajeTipo] = useState("");
 
   const esTerreno = TIPOS_TERRENO.includes(form.tipo);
+
   const comunas = form.region
     ? regionesChile[form.region] ?? []
     : [];
@@ -60,6 +61,7 @@ export default function PublicarPropiedad() {
   function actualizarCampo({ target: { name, value } }) {
     setForm((actual) => ({
       ...actual,
+
       [name]: value,
 
       ...(name === "region"
@@ -309,6 +311,8 @@ export default function PublicarPropiedad() {
         imagenes: resultadoImagenes.urls,
 
         estado: "pendiente",
+        publicada: false,
+        destacada: false,
       };
 
       const { error: errorRegistro } = await supabase
@@ -324,8 +328,10 @@ export default function PublicarPropiedad() {
       );
 
       setMensajeTipo("exito");
-      setForm({ ...initialForm });
 
+      setForm({
+        ...initialForm,
+      });
     } catch (error) {
       console.error(error);
 
